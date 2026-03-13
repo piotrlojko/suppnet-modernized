@@ -12,11 +12,11 @@
 ---
 
 ## Installing Guide
-SUPPNet can be istalled in several simple steps. If you want to test SUPPNet on-line version please check the [link](https://rozanskit.com/suppnet/) (recommended Chrome browser).
+SUPPNet can be installed in several simple steps. If you want to test SUPPNet on-line version please check the [link](https://rozanskit.com/suppnet/) (recommended Chrome browser).
 
 ### 0. Prerequisites
 
-Install [anaconda](conda.io) Python distribution.
+Install [Python 3.12](https://www.python.org/downloads/) or later. No Anaconda required — all dependencies are available via `pip`.
 
 ### 1. Download repository
 
@@ -29,18 +29,32 @@ Now change the directory to `suppnet`:
 cd suppnet
 ```
 
-### 2. Handle requirements
+### 2. Create and activate a virtual environment
 
-Now create and activate a [conda](conda.io) environment `suppnet-env` that handles all dependencies.
-
+Create a virtual environment (recommended):
 ```
-conda env create -f environment.yml
-conda activate suppnet-env
+python -m venv .venv
+```
+Activate it:
+- On Linux/macOS:
+  ```
+  source .venv/bin/activate
+  ```
+- On Windows:
+  ```
+  .venv\Scripts\activate
+  ```
+
+### 3. Install dependencies
+
+Install all required packages with pip:
+```
+pip install -r requirements.txt
 ```
 
 ## Creating symbolic link in local '~/bin/' directory
 
-The package contains the script SUPPNET.sh which enable user to use suppnet from any place in the system by simply calling `SUPPNET` command. To create symbolic link please make sure that you have local `~/bin` directory by running:
+The package contains the script SUPPNET.sh which enables user to use suppnet from any place in the system by simply calling `SUPPNET` command. To create symbolic link please make sure that you have local `~/bin` directory by running:
 ```
 ls ~/bin
 ```
@@ -56,13 +70,17 @@ you should see something like:
 ```
 lrwxrwxrwx 1 tr tr 37 wrz 23 11:20 /home/tr/bin/SUPPNET -> /home/tr/repos/suppnet-dev/SUPPNET.sh
 ```
-Having `SUPPNET` script installed correctly you do not need to manually activate suppnet-env environment and you can run any commands described in next paragraph. To test if everything runns correctly just run:
+**Important:** Before running the `SUPPNET` command, activate your virtual environment:
+```
+source .venv/bin/activate
+```
+To test if everything runs correctly just run:
 ```
 SUPPNET
 ```
 
 ## Python script usage
-After successful environment creation and linking the script SUPPNET in your personal `bin` directory you should be able to use SUPPNet. Spectra that you are working with should't have header: the forst column should contain wavelengths in angstroms (nanometers possible but then you need to change the sampling value from default 0.05 to 0.005), the second should contain flux. Start with:
+After successful environment setup and linking the script SUPPNET in your personal `bin` directory you should be able to use SUPPNet. Spectra that you are working with should't have header: the first column should contain wavelengths in angstroms (nanometers possible but then you need to change the sampling value from default 0.05 to 0.005), the second should contain flux. Start with:
 ```
 SUPPNET
 ```
@@ -93,11 +111,7 @@ SUPPNET --help
 
 ## SUPPNet as python module
 
-You can install and use `suppnet` as regular Python module. Start from activating appropriate environment, e.g.
-```
-conda activate suppnet-env
-```
-And then call:
+You can install and use `suppnet` as regular Python module. First activate your virtual environment, then call:
 ```
 pip install -e .
 ```

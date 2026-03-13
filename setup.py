@@ -17,7 +17,15 @@ setup(name='suppnet',
         "License :: OSI Approved :: MIT License",
         "Operating System :: POSIX :: Linux",
         ],
-      python_requires='>=3.12'
+      python_requires='>=3.12',
+      install_requires=[
+          'numpy==2.2.6',
+          'scipy==1.15.2',
+          'PySide6==6.8.3',
+          'matplotlib==3.9.4',
+          'pandas==2.2.3',
+          'tensorflow==2.18.0',
+      ],
 )
 
 # Way to install in develop mode
