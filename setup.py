@@ -17,7 +17,7 @@ setup(name='suppnet',
         "License :: OSI Approved :: MIT License",
         "Operating System :: POSIX :: Linux",
         ],
-      python_requires='>=3.5'
+      python_requires='>=3.12'
 )
 
 # Way to install in develop mode

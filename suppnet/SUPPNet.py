@@ -331,4 +331,4 @@ def get_suppnet_model(norm_only=True, which_weights="active"):
 
 if __name__ == "__main__":
     print("Num GPUs Available: ", len(
-        tf.config.experimental.list_physical_devices('GPU')))
+        tf.config.list_physical_devices('GPU')))
