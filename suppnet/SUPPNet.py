@@ -11,7 +11,7 @@ from tensorflow.keras.backend import clear_session
 
 from tensorflow.keras.layers import Input, Conv1D, MaxPooling1D, UpSampling1D, Dropout, concatenate
 from tensorflow.keras.layers import Conv1DTranspose, GlobalAveragePooling1D, Dense, Multiply, Add, Concatenate, add
-from tensorflow.keras.layers import ReLU, LayerNormalization, Conv1DTranspose, AveragePooling1D
+from tensorflow.keras.layers import ReLU, LayerNormalization, Conv1DTranspose, AveragePooling1D, Reshape, UpSampling2D
 from tensorflow.keras.models import Model, load_model
 
 
@@ -130,7 +130,7 @@ def head_continuum(x, name):
 
 
 def stem(x):
-    residual_block(x, width=16, bottleneck_ratio=1, group_width=16)
+    x = residual_block(x, width=16, bottleneck_ratio=1, group_width=16)
     return x
 
 
@@ -142,10 +142,10 @@ def PSPModule(in_features, compression, w, d):
         if y.shape[-1] != w:
             y = Conv1D(w, 1, padding='same')(y)
         x.append(interp_block(factor, w, d)(y))
-    if len(compression) > 1:
+    if len(x) > 1:
         x = Concatenate()(x)
     else:
-        x = in_features
+        x = x[0]
     return x
 
 
@@ -161,10 +161,10 @@ def interp_block(pool_size, w, d, b=1, g=None):
 
 
 def UpSampling1D_layers(inputs, size=2):
-    x = tf.reshape(inputs, (-1, inputs.shape[1], 1, inputs.shape[2]))
-    x = tf.keras.layers.UpSampling2D(
+    x = Reshape((inputs.shape[1], 1, inputs.shape[2]))(inputs)
+    x = UpSampling2D(
         size=(size, 1), data_format='channels_last', interpolation="bilinear")(x)
-    return tf.reshape(x, (-1, x.shape[1], x.shape[3]))
+    return Reshape((x.shape[1], x.shape[3]))(x)
 
 
 def PSP_block_net(x, width, depth, bottleneck_ratio=1, group_width=None):
