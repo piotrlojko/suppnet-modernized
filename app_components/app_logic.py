@@ -137,6 +137,8 @@ class Logic:
         df.to_csv(filename, sep=' ', index=False)
 
     def compute_continuum(self):
+        if self.nn is None:
+            raise RuntimeError("Model is not loaded yet. Please wait for the model to finish loading.")
         self.continuum, self.continuum_error, self.segmentation, self.segmentation_error = self.nn.normalize(
             self.spectrum["wave"].values, self.spectrum["flux"].values)
         self.fit_spline()
@@ -191,7 +193,7 @@ class Logic:
         if self.nn is not None:
             return self.nn.resampling_step
         else:
-            return None
+            return self.resampling_step
 
 def main():
     pass
