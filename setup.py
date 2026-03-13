@@ -17,20 +17,19 @@ setup(name='suppnet',
         "License :: OSI Approved :: MIT License",
         "Operating System :: POSIX :: Linux",
         ],
-      python_requires='>=3.12',
+      python_requires='>=3.12.3',
       install_requires=[
-          'numpy==2.2.6',
-          'scipy==1.15.2',
-          'PySide6==6.8.3',
-          'matplotlib==3.9.4',
-          'pandas==2.2.3',
-          'tensorflow==2.18.0',
+          'numpy==2.4.3',
+          'scipy==1.17.1',
+          'PySide6==6.10.2',
+          'matplotlib==3.10.8',
+          'pandas==3.0.1',
+          'tensorflow==2.21.0',
       ],
 )
 
-# Way to install in develop mode
-# python setup.py develop
-# https://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode
+# Install in editable/development mode with pip:
+# pip install -e .
 
-# or simply install
-# python setup.py install
+# Or for a regular install:
+# pip install .

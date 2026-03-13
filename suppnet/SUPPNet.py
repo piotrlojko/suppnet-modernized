@@ -13,7 +13,6 @@ from tensorflow.keras.layers import Input, Conv1D, MaxPooling1D, UpSampling1D, D
 from tensorflow.keras.layers import Conv1DTranspose, GlobalAveragePooling1D, Dense, Multiply, Add, Concatenate, add
 from tensorflow.keras.layers import ReLU, LayerNormalization, Conv1DTranspose, AveragePooling1D
 from tensorflow.keras.models import Model, load_model
-import tensorflow.keras.backend as K
 
 
 def residual_block(x, width, bottleneck_ratio=1, group_width=None, name=None):
@@ -164,7 +163,7 @@ def interp_block(pool_size, w, d, b=1, g=None):
 def UpSampling1D_layers(inputs, size=2):
     x = tf.reshape(inputs, (-1, inputs.shape[1], 1, inputs.shape[2]))
     x = tf.keras.layers.UpSampling2D(
-        size=(size, 1), data_format=None, interpolation="bilinear")(x)
+        size=(size, 1), data_format='channels_last', interpolation="bilinear")(x)
     return tf.reshape(x, (-1, x.shape[1], x.shape[3]))
 
 

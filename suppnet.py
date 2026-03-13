@@ -3,8 +3,6 @@ import sys
 import time
 import pandas as pd
 import numpy as np
-from scipy.interpolate import UnivariateSpline, InterpolatedUnivariateSpline
-from tensorflow.keras.models import load_model
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QLabel
 from PySide6.QtCore import QFile, QThreadPool
@@ -18,7 +16,6 @@ from matplotlib.backends.backend_qtagg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.gridspec import GridSpec
-from matplotlib.widgets import SpanSelector
 
 
 class MainWindow(QMainWindow):
@@ -224,7 +221,7 @@ class MainWindow(QMainWindow):
         self.ax2.grid(True)
         self.line21, self.line22, = self.ax2.plot([], [], 'k', [], [], 'b--')
 
-        self.ax1.set_autoscaley_on(True)
+        self.ax1.set_ylim(auto=True)
         self.ax2.set_ylim([0.1, 2.0])
         self.ax2.set_ylabel("Normed flux")
 
