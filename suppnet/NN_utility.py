@@ -146,7 +146,7 @@ def process_all_spectra(paths, skip_rows, resampling_step=0.05, smoothing=1.0, w
         spectrum = pd.read_csv(sfn,
                                index_col=None,
                                header=None,
-                               delim_whitespace=True,
+                               sep=r'\s+',
                                skiprows=skip_rows,
                                comment="#")
         spectrum[1] /= np.nanmedian(spectrum[1])

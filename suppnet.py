@@ -14,7 +14,7 @@ from app_components.app_logic import Logic
 from app_components.draggable_scatter import DraggableScatter
 
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt5agg import (
+from matplotlib.backends.backend_qtagg import (
     FigureCanvasQTAgg as FigureCanvas,
     NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.gridspec import GridSpec
@@ -66,8 +66,7 @@ class MainWindow(QMainWindow):
         self.fig = Figure(dpi=self.dpi)
         self.canvas = FigureCanvas(self.fig)
         self.toolbar = NavigationToolbar(self.canvas,
-                                         self.ui.centralwidget,
-                                         coordinates=True
+                                         self.ui.centralwidget
                                          )
         self.create_plots()
         self.ui.mplvl.addWidget(self.canvas)

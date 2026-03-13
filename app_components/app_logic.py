@@ -44,7 +44,7 @@ class Logic:
     def read_spectrum(self, filename):
         self.spectrum = pd.read_csv(filename,
                                     index_col=None,
-                                    delim_whitespace=True,
+                                    sep=r'\s+',
                                     comment="#"
                                     )
         self.opened_file_name = os.path.basename(filename)
@@ -71,7 +71,7 @@ class Logic:
     def read_processed_spectrum(self, filename):
         data = pd.read_csv(filename,
                            index_col=None,
-                           delim_whitespace=True,
+                           sep=r'\s+',
                            comment="#"
                            )
         # COLUMNS:
