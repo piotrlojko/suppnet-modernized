@@ -16,7 +16,7 @@ SUPPNet can be installed in several simple steps. If you want to test SUPPNet on
 
 ### 0. Prerequisites
 
-Install [Python 3.12](https://www.python.org/downloads/) or later. No Anaconda required — all dependencies are available via `pip`.
+Install [Python 3.12.3](https://www.python.org/downloads/) or later. No Anaconda required — all dependencies are available via `pip`.
 
 ### 1. Download repository
 
@@ -31,18 +31,18 @@ cd suppnet
 
 ### 2. Create and activate a virtual environment
 
-Create a virtual environment (recommended):
+Create a dedicated virtual environment named `suppnet_env` in your home directory (recommended):
 ```
-python -m venv .venv
+python -m venv ~/suppnet_env
 ```
 Activate it:
 - On Linux/macOS:
   ```
-  source .venv/bin/activate
+  source ~/suppnet_env/bin/activate
   ```
 - On Windows:
   ```
-  .venv\Scripts\activate
+  %USERPROFILE%\suppnet_env\Scripts\activate
   ```
 
 ### 3. Install dependencies
@@ -72,7 +72,7 @@ lrwxrwxrwx 1 tr tr 37 wrz 23 11:20 /home/tr/bin/SUPPNET -> /home/tr/repos/suppne
 ```
 **Important:** Before running the `SUPPNET` command, activate your virtual environment:
 ```
-source .venv/bin/activate
+source ~/suppnet_env/bin/activate
 ```
 To test if everything runs correctly just run:
 ```

@@ -3,7 +3,6 @@ from scipy.interpolate import UnivariateSpline
 from numpy import ma
 import numpy as np
 import os
-from scipy.interpolate import interp1d
 from suppnet.SUPPNet import get_suppnet_model
 
 
@@ -69,19 +68,17 @@ class ProcessSpectrum:
         if self.only_norm:
             continuum, continuum_std = self.process_signal(
                 result, shifts, length, norm=True)
-            f_cont = interp1d(new_wave, continuum, kind='linear')
-            f_cont_err = interp1d(new_wave, continuum_std, kind='linear')
-            return f_cont(wave), f_cont_err(wave)
+            return (np.interp(wave, new_wave, np.asarray(continuum)),
+                    np.interp(wave, new_wave, np.asarray(continuum_std)))
         else:
             continuum, continuum_std = self.process_signal(
                 result["cont"], shifts, length, norm=True)
             segmentation, segmentation_std = self.process_signal(
                 result["seg"], shifts, length, norm=False)
-            f_seg = interp1d(new_wave, segmentation, kind='linear')
-            f_seg_err = interp1d(new_wave, segmentation_std, kind='linear')
-            f_cont = interp1d(new_wave, continuum, kind='linear')
-            f_cont_err = interp1d(new_wave, continuum_std, kind='linear')
-            return f_cont(wave), f_cont_err(wave), f_seg(wave), f_seg_err(wave)
+            return (np.interp(wave, new_wave, np.asarray(continuum)),
+                    np.interp(wave, new_wave, np.asarray(continuum_std)),
+                    np.interp(wave, new_wave, np.asarray(segmentation)),
+                    np.interp(wave, new_wave, np.asarray(segmentation_std)))
 
     def process_signal(self, result, shifts, length, norm=True):
         processed = np.squeeze(result)
