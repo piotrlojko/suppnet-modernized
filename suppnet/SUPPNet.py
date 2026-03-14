@@ -5,6 +5,7 @@ from itertools import accumulate
 import os
 import numpy as np
 
+import h5py
 import tensorflow as tf
 from tensorflow.keras.optimizers import Nadam
 from tensorflow.keras.backend import clear_session
@@ -300,6 +301,32 @@ class modelWrapper:
             return {"cont": results[2], "seg": results[3]}
 
 
+def _load_weights_from_legacy_h5(model, filepath):
+    """Load weights from a legacy Keras 2 HDF5 weights file into a model.
+
+    The layer_names attribute stored in the HDF5 file preserves the
+    topological order of the original model, so the weights can be
+    set positionally on a freshly built model with the same architecture.
+    """
+    if not os.path.isfile(filepath):
+        raise FileNotFoundError(f"Weights file not found: {filepath}")
+    weights = []
+    with h5py.File(filepath, 'r') as f:
+        layer_names = [
+            n.decode('utf-8') if isinstance(n, bytes) else n
+            for n in f.attrs['layer_names']
+        ]
+        for layer_name in layer_names:
+            g = f[layer_name]
+            weight_names = [
+                n.decode('utf-8') if isinstance(n, bytes) else n
+                for n in g.attrs['weight_names']
+            ]
+            for wn in weight_names:
+                weights.append(np.array(g[wn]))
+    model.set_weights(weights)
+
+
 def get_suppnet_model(norm_only=True, which_weights="active"):
     script_directory = os.path.dirname(os.path.realpath(__file__))
 
@@ -310,16 +337,16 @@ def get_suppnet_model(norm_only=True, which_weights="active"):
 
     print("Start loading weights!")
     if which_weights == "synth":
-        SUPPNet_synth_weights_relative_path = 'supp_weights/SUPPNet_synth'
-        SUPPNet_model.load_weights(os.path.join(script_directory, SUPPNet_synth_weights_relative_path))
+        weights_path = 'supp_models_modernized/SUPPNet_synth.weights.h5'
+        _load_weights_from_legacy_h5(SUPPNet_model, os.path.join(script_directory, weights_path))
         print("SUPPNet (synth)")
     elif which_weights == "active":
-        SUPPNet_active_weights_relative_path = 'supp_weights/SUPPNet_active'
-        SUPPNet_model.load_weights(os.path.join(script_directory, SUPPNet_active_weights_relative_path))
+        weights_path = 'supp_models_modernized/SUPPNet_active.weights.h5'
+        _load_weights_from_legacy_h5(SUPPNet_model, os.path.join(script_directory, weights_path))
         print("SUPPNet (active)")
     elif which_weights == "emission":
-        SUPPNet_powr_weights_relative_path = 'supp_weights/SUPPNet_18_powr'
-        SUPPNet_model.load_weights(os.path.join(script_directory, SUPPNet_powr_weights_relative_path))
+        weights_path = 'supp_models_modernized/SUPPNet_18_powr.weights.h5'
+        _load_weights_from_legacy_h5(SUPPNet_model, os.path.join(script_directory, weights_path))
         print("SUPPNet (emission, active+PoWR)")
     else:
         raise ValueError("Unknown model type")
