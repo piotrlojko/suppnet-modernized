@@ -1,0 +1,22 @@
+{
+  "source_checkpoint_prefix": "suppnet/supp_weights/SUPPNet_18_powr",
+  "source_files": [
+    "suppnet/supp_weights/SUPPNet_18_powr.index",
+    "suppnet/supp_weights/SUPPNet_18_powr.data-00000-of-00001"
+  ],
+  "exported_files": [
+    "suppnet/supp_weights_converted/SUPPNet_18_powr.keras",
+    "suppnet/supp_weights_converted/SUPPNet_18_powr.weights.h5"
+  ],
+  "model_input_shape": [
+    8192,
+    1
+  ],
+  "model_outputs": [
+    "cont_1",
+    "seg_1",
+    "cont_2",
+    "seg_2"
+  ],
+  "tensorflow_version_used_for_export": "2.4.0"
+}
