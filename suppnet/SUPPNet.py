@@ -308,6 +308,8 @@ def _load_weights_from_legacy_h5(model, filepath):
     topological order of the original model, so the weights can be
     set positionally on a freshly built model with the same architecture.
     """
+    if not os.path.isfile(filepath):
+        raise FileNotFoundError(f"Weights file not found: {filepath}")
     weights = []
     with h5py.File(filepath, 'r') as f:
         layer_names = [
