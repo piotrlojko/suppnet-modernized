@@ -1,3 +1,6 @@
+```diff
+-This repo is almost entirely vibe-coded and still a work in progress, so do not expect it to work properly-
+```
 # SUPPNet: Neural network for stellar spectrum normalisation
 
 ---
