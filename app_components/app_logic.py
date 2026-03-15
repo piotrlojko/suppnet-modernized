@@ -89,6 +89,7 @@ class Logic:
         self.normed_flux_err = None
 
         self.fit_spline()
+        self.update_all()
         print(f"Normed spectrum noise = {self.normed_spectrum_noise:.4f}")
 
     def update_all(self):
@@ -103,7 +104,7 @@ class Logic:
                                   )
 
     def on_adjust_smooth_factor(self, smooth_factor=1.0):
-        self.smooth_factor = smooth_factor
+        self.smooth_factor = max(0.05, float(smooth_factor))
         self.fit_spline()
 
     def save_normed_spectrum(self, filename):
@@ -145,10 +146,11 @@ class Logic:
         return
 
     def fit_spline(self):
+        if self.continuum is None or self.continuum_error is None:
+            return
         knots_x, knots_y = self.fit_smoothing_spline(
             self.spectrum["wave"].values, self.continuum, self.continuum_error*self.smooth_factor)
         self.spline.set_knots(knots_x, knots_y)
-        self.update_all()
 
     def noise_value(self, v):
         # signal = np.nanmedian(v)
@@ -170,17 +172,32 @@ class Logic:
         wave = wave[mask]
         continuum = continuum[mask]
         continuum_std = continuum_std[mask]
-        weights = 1./continuum_std
-        spl = UnivariateSpline(wave,
-                               continuum,
-                               w=weights,
-                               bbox=[None, None],
-                               k=3,
-                               s=None,
-                               ext=0,
-                               check_finite=False)
-        knots = spl.get_knots()
-        return knots, spl(knots)
+
+        if len(wave) < 4:
+            if len(wave) >= 2:
+                return wave, continuum
+            return np.array([]), np.array([])
+
+        continuum_std = np.maximum(continuum_std, 1e-4)
+        weights = 1.0 / continuum_std
+        weights = np.minimum(weights, 1e4)
+
+        try:
+            spl = UnivariateSpline(wave,
+                                   continuum,
+                                   w=weights,
+                                   bbox=[None, None],
+                                   k=3,
+                                   s=None,
+                                   ext=0,
+                                   check_finite=False)
+            knots = spl.get_knots()
+            return knots, spl(knots)
+        except Exception as exc:
+            print(f"UnivariateSpline fitting failed ({exc}); falling back to evenly-spaced knots.")
+            n_fallback = min(200, len(wave))
+            idx = np.linspace(0, len(wave) - 1, n_fallback, dtype=int)
+            return wave[idx], continuum[idx]
 
     def get_plotting_data(self):
         return self.spectrum

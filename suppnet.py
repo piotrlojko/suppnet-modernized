@@ -28,9 +28,10 @@ class MainWindow(QMainWindow):
         self.logic = Logic(resampling_step=resampling_step, which_weights=which_weights)
         self.spline = self.logic.spline
         self.show_segmentation = show_segmentation
+        self.is_normalizing = False
 
+        self.threadpool = QThreadPool()
         if path is None:
-            self.threadpool = QThreadPool()
             self.for_threading()
 
         self.configure_slider()
@@ -91,6 +92,8 @@ class MainWindow(QMainWindow):
         self.ui.slider_value.setText(f"{slider_value:.2f}")
 
     def on_update_normalization(self):
+        if self.is_normalizing:
+            return
         position = self.ui.horizontalSlider.value()
         slider_value = (position/self.slider_number_of_steps) * \
             (self.slider_maximum-self.slider_minimum)+self.slider_minimum
@@ -196,10 +199,34 @@ class MainWindow(QMainWindow):
         self.canvas.draw()
 
     def normalize(self):
-        self.ui.statusbar.showMessage("Normalising...")
-        self.logic.compute_continuum()
+        if self.is_normalizing:
+            return
+        self.is_normalizing = True
+        self.ui.statusbar.showMessage("Normalising in background...")
+        self._set_normalizing_ui(True)
+        worker = Worker(self.logic.compute_continuum)
+        worker.signals.error.connect(self._on_normalize_error)
+        worker.signals.finished.connect(self._on_normalize_done)
+        self.threadpool.start(worker)
+
+    def _set_normalizing_ui(self, normalizing):
+        self.ui.action_normalize.setEnabled(not normalizing)
+        self.ui.update_normalization.setEnabled(not normalizing)
+        self.ui.actionOpen_spectrum.setEnabled(not normalizing)
+        self.ui.actionOpen_processed_spectrum.setEnabled(not normalizing)
+
+    def _on_normalize_error(self, error_info):
+        exctype, value, tb = error_info
+        self.ui.statusbar.showMessage(f"Normalisation failed: {value}")
+        print(tb)
+        self.is_normalizing = False
+        self._set_normalizing_ui(False)
+
+    def _on_normalize_done(self):
         self.update_plots_and_data(resize=False)
         self.ui.statusbar.showMessage("Normalisation done.")
+        self.is_normalizing = False
+        self._set_normalizing_ui(False)
 
     def create_plots(self):
         self.fig.subplots_adjust(

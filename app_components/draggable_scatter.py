@@ -32,7 +32,8 @@ class DraggableScatter():
 
     def get_line_data(self, knots_x):
         if len(knots_x) > 1:
-            self.x_line = np.linspace(knots_x[0], knots_x[-1], 10*len(knots_x))
+            n_pts = min(3000, max(300, 10 * len(knots_x)))
+            self.x_line = np.linspace(knots_x[0], knots_x[-1], n_pts)
         else:
             self.x_line = []
         return self.x_line, self._ispl(self.x_line)
@@ -78,7 +79,6 @@ class DraggableScatter():
         x, y = self._ispl.get_knots()
         if len(x) > 1:
             xy = list(zip(x, y))
-            self.x_line = np.linspace(x[0], x[-1], 30*len(x))
         else:
             xy = np.empty((0, 2))
         self.scatter.set_offsets(xy)
