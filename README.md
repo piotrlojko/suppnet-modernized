@@ -29,9 +29,9 @@ Download `suppnet` repository by:
 ```
 git clone https://github.com/piotrlojko/suppnet-modernized.git
 ```
-Now change the directory to `suppnet`:
+Now change the directory to `suppnet-modernized`:
 ```
-cd suppnet
+cd suppnet-modernized
 ```
 
 ### 2. Create and activate a virtual environment
