@@ -59,13 +59,15 @@ pip install -r requirements.txt
 
 ## Creating symbolic link in local '~/bin/' directory
 
-The package contains the script SUPPNET.sh, which enables the user to use suppnet from any place in the system by simply calling `SUPPNET` command. To create a symbolic link, please make sure that you have a local `~/bin` directory by running:
+The package contains the script SUPPNET.sh, which enables the user to use SUPPNet from any place in the system by simply calling `SUPPNET` command. To create such a symbolic link, please make sure that you have a local `~/bin` directory by running:
 ```
 ls ~/bin
 ```
-If you do not have `~/bin` directory, you can create one by running: `mkdir ~/bin`. Then create a link:
+If you do not have `~/bin` directory, you can create one by running: `mkdir ~/bin`. **You must ensure that your local `~/bin` is on PATH.**
+Then, **from within the suppnet directory**, create a symlink:
 ```
-ln -s ${PWD}/SUPPNET.sh ~/bin/SUPPNET
+cd ~/suppnet-modernized
+ln -s ${pwd}/SUPPNET.sh ~/bin/SUPPNET
 ```
 Inspect the result by:
 ```
@@ -73,7 +75,7 @@ ls -l ~/bin/SUPPNET
 ```
 You should see something like:
 ```
-lrwxrwxrwx 1 tr tr 37 wrz 23 11:20 /home/tr/bin/SUPPNET -> /home/tr/repos/suppnet-dev/SUPPNET.sh
+lrwxrwxrwx 1 tr tr 37 wrz 23 11:20 /home/piotr/bin/SUPPNET -> /home/piotr/suppnet-modernized/SUPPNET.sh
 ```
 **Important:** Before running the `SUPPNET` command, activate your virtual environment:
 ```
@@ -83,6 +85,15 @@ To test if everything runs correctly, just run:
 ```
 SUPPNET
 ```
+
+## Creating a system-wide symbolic link in the '/usr/bin/' directory
+
+If you have superuser privileges, you can run:
+```
+cd ~/suppnet-modenized
+sudo ln -s ${pwd}/SUPPNET.sh /usr/bin/SUPPNET
+```
+to enable SUPPNet for all users.
 
 ## Python script usage
 After successful environment setup and linking the script SUPPNET in your personal `bin` directory, you should be able to use SUPPNet. Spectra that you are working with shouldn't have any header: the first column is to contain wavelengths in angstroms (nanometers possible, but then you need to change the sampling value from default 0.05 to 0.005), the second should contain flux. Start with:
