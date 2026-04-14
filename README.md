@@ -21,7 +21,7 @@ SUPPNet can be installed in several simple steps. If you want to test SUPPNet on
 
 ### 0. Prerequisites
 
-Install [Python 3.12.3](https://www.python.org/downloads/) or later. No Anaconda required — all dependencies are available via `pip`.
+Install [Python 3.12.3](https://www.python.org/downloads/) or later. All dependencies are available via `pip`.
 
 ### 1. Download repository
 
