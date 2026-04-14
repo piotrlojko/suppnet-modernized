@@ -1,5 +1,5 @@
 > [!IMPORTANT]
-> # This repo is an almost entirely vibe-coded fork of the original `SUPPNet` code, and remains a work in progress. So do not expect it to work properly (although it seems to be).
+> # This repo is almost entirely a vibe-coded fork of the original `SUPPNet` code, and remains a work in progress. So do not expect it to work properly (although it seems to be).
 > The main goal is to create a sleek and modern SUPPNet edition, based on the latest versions of Python and TensorFlow, while transitioning from the original `Anaconda`-based solution to pure `venv`.
 
 
