@@ -70,7 +70,7 @@ If you do not have `~/bin` directory, you can create one by running: `mkdir ~/bi
 Then, **from within the suppnet directory**, create a symlink:
 ```
 cd ~/suppnet-modernized
-ln -s ${pwd}/SUPPNET.sh ~/bin/SUPPNET
+ln -s $(pwd)/SUPPNET.sh ~/bin/SUPPNET
 ```
 Inspect the result by:
 ```
@@ -94,7 +94,7 @@ SUPPNET
 If you have superuser privileges, you can run:
 ```
 cd ~/suppnet-modenized
-sudo ln -s ${pwd}/SUPPNET.sh /usr/bin/SUPPNET
+sudo ln -s $(pwd)/SUPPNET.sh /usr/bin/SUPPNET
 ```
 to enable SUPPNet for all users.
 
