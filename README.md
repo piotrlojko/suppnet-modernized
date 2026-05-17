@@ -111,7 +111,7 @@ SUPPNET [--segmentation] [--sampling RESAMPLING_STEP=0.05] [--weights WHICH_WEIG
 ```
 2. Normalisation of a group of spectra without any supervision:
 ```
-SUPPNET --quiet [--sampling RESAMPLING_STEP=0.05] [--weights WHICH_WEIGHTS=active|synth|emission] [--skip number_of_rows_to_skip=0] path_to_spec_1.txt [path_to_spec_2.txt ...]
+SUPPNET --quiet [--sampling RESAMPLING_STEP=0.05] [--smoothing SMOOTHING_FACTOR=1.0] [--weights WHICH_WEIGHTS=active|synth|emission] [--skip number_of_rows_to_skip=0] path_to_spec_1.txt [path_to_spec_2.txt ...]
 ```
 3. Manual inspection and correction of previously normalised spectrum, SUPPNet will not be loaded (often used in pair with 2.):
 ```
@@ -123,9 +123,10 @@ You can always remind yourself of the usage by writing:
 SUPPNET --help
 ```
 
-### --sampling and --weights options
+### --sampling, --smoothing and --weights options
 
 - `--sampling`, default=0.05, sampling option enables the user to adjust the resampling that the neural network is using for a pseudo-continuum prediction, (If working with wavelengths in nm should be changed to 0.005),
+- `--smoothing`, default=1.0, sets the pseudo-continuum smoothing factor used in quiet mode; values below 0.05 are clamped to 0.05 to keep spline fitting responsive and numerically stable,
 - `--weights`, default=active, set of weights that can be used, __active__ is a default one, __emission__ should be used for objects that show wide emission lines, __synth__ is a set of weights trained only on synthetic spectra and shouldn't be used for doing science.
 
 ## SUPPNet as a Python module
