@@ -5,10 +5,15 @@ import pandas as pd
 import numpy as np
 import sys
 import os
-from scipy.interpolate import UnivariateSpline
 from tensorflow.keras.models import load_model
 
-from suppnet.NN_utility import ProcessSpectrum, MinMaxNormalizer
+from suppnet.NN_utility import (
+    MIN_SMOOTHING_FACTOR,
+    ProcessSpectrum,
+    MinMaxNormalizer,
+    fit_smoothing_spline_knots,
+    safe_median_scale,
+)
 from app_components.interactive_spline import InteractiveSpline
 from suppnet.SUPPNet import get_suppnet_model
 
@@ -44,6 +49,7 @@ class Logic:
     def read_spectrum(self, filename):
         self.spectrum = pd.read_csv(filename,
                                     index_col=None,
+                                    header=None,
                                     sep=r'\s+',
                                     comment="#"
                                     )
@@ -63,7 +69,7 @@ class Logic:
         else:
             self.spectrum.columns = [
                 'wave', 'flux', 'error'] + [x for x in self.spectrum.columns[3:]]
-        median = np.nanmedian(self.spectrum['flux'])
+        median = safe_median_scale(self.spectrum['flux'], fallback=None)
         self.spectrum["flux"] = self.spectrum["flux"]/median
         if "error" in self.spectrum.columns:
             self.spectrum["error"] = self.spectrum["error"]/median
@@ -104,8 +110,23 @@ class Logic:
                                   )
 
     def on_adjust_smooth_factor(self, smooth_factor=1.0):
-        self.smooth_factor = max(0.05, float(smooth_factor))
-        self.fit_spline()
+        knots_x, knots_y = self.calculate_spline_knots(smooth_factor)
+        self.apply_spline_knots(smooth_factor, knots_x, knots_y)
+
+    def calculate_spline_knots(self, smooth_factor=1.0):
+        if self.continuum is None or self.continuum_error is None:
+            return np.array([]), np.array([])
+        smooth_factor = max(MIN_SMOOTHING_FACTOR, float(smooth_factor))
+        return self.fit_smoothing_spline(
+            self.spectrum["wave"].values,
+            self.continuum,
+            self.continuum_error,
+            smooth_factor=smooth_factor,
+        )
+
+    def apply_spline_knots(self, smooth_factor, knots_x, knots_y):
+        self.smooth_factor = max(MIN_SMOOTHING_FACTOR, float(smooth_factor))
+        self.spline.set_knots(knots_x, knots_y)
 
     def save_normed_spectrum(self, filename):
         wave = self.spectrum['wave']
@@ -148,8 +169,7 @@ class Logic:
     def fit_spline(self):
         if self.continuum is None or self.continuum_error is None:
             return
-        knots_x, knots_y = self.fit_smoothing_spline(
-            self.spectrum["wave"].values, self.continuum, self.continuum_error*self.smooth_factor)
+        knots_x, knots_y = self.calculate_spline_knots(self.smooth_factor)
         self.spline.set_knots(knots_x, knots_y)
 
     def noise_value(self, v):
@@ -166,38 +186,13 @@ class Logic:
             self.normed_flux_err = self.continuum_error/self.smoothed_continuum
             self.normed_spectrum_noise = self.noise_value(self.normed_flux)
 
-    def fit_smoothing_spline(self, wave, continuum, continuum_std):
-        mask = ~(np.isclose(continuum_std, 0) | np.isclose(
-            continuum, 0) | np.isnan(continuum_std) | np.isnan(continuum))
-        wave = wave[mask]
-        continuum = continuum[mask]
-        continuum_std = continuum_std[mask]
-
-        if len(wave) < 4:
-            if len(wave) >= 2:
-                return wave, continuum
-            return np.array([]), np.array([])
-
-        continuum_std = np.maximum(continuum_std, 1e-4)
-        weights = 1.0 / continuum_std
-        weights = np.minimum(weights, 1e4)
-
-        try:
-            spl = UnivariateSpline(wave,
-                                   continuum,
-                                   w=weights,
-                                   bbox=[None, None],
-                                   k=3,
-                                   s=None,
-                                   ext=0,
-                                   check_finite=False)
-            knots = spl.get_knots()
-            return knots, spl(knots)
-        except Exception as exc:
-            print(f"UnivariateSpline fitting failed ({exc}); falling back to evenly-spaced knots.")
-            n_fallback = min(200, len(wave))
-            idx = np.linspace(0, len(wave) - 1, n_fallback, dtype=int)
-            return wave[idx], continuum[idx]
+    def fit_smoothing_spline(self, wave, continuum, continuum_std, smooth_factor=1.0):
+        return fit_smoothing_spline_knots(
+            wave,
+            continuum,
+            continuum_std,
+            smoothing_factor=smooth_factor,
+        )
 
     def get_plotting_data(self):
         return self.spectrum

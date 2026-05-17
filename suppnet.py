@@ -10,6 +10,7 @@ from app_components.main_window_qt import Ui_MainWindow
 from app_components.worker import Worker
 from app_components.app_logic import Logic
 from app_components.draggable_scatter import DraggableScatter
+from suppnet.NN_utility import MIN_SMOOTHING_FACTOR
 
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import (
@@ -29,6 +30,7 @@ class MainWindow(QMainWindow):
         self.spline = self.logic.spline
         self.show_segmentation = show_segmentation
         self.is_normalizing = False
+        self.is_smoothing = False
 
         self.threadpool = QThreadPool()
         if path is None:
@@ -73,32 +75,71 @@ class MainWindow(QMainWindow):
         self.canvas.draw()
 
     def configure_slider(self):
-        self.slider_minimum = 0.0
+        self.slider_minimum = MIN_SMOOTHING_FACTOR
         self.slider_maximum = 2.0
-        self.slider_number_of_steps = 200
-        self.slider_ticks = self.slider_number_of_steps//10
+        self.slider_step = 0.01
+        self.slider_number_of_steps = int(round(
+            (self.slider_maximum-self.slider_minimum)/self.slider_step))
+        self.slider_ticks = max(1, self.slider_number_of_steps//10)
         self.ui.horizontalSlider.setMinimum(0)
         self.ui.horizontalSlider.setMaximum(self.slider_number_of_steps)
         self.ui.horizontalSlider.setTickInterval(self.slider_ticks)
         self.ui.horizontalSlider.setSingleStep(1)
 
-        self.ui.horizontalSlider.setValue(100)
+        self.ui.horizontalSlider.setValue(self.slider_position_from_value(1.0))
 
         self.ui.horizontalSlider.valueChanged.connect(self.update_label)
 
+    def slider_value_from_position(self, position):
+        slider_value = self.slider_minimum + position*self.slider_step
+        return min(self.slider_maximum, max(self.slider_minimum, slider_value))
+
+    def slider_position_from_value(self, value):
+        value = min(self.slider_maximum, max(self.slider_minimum, float(value)))
+        return int(round((value-self.slider_minimum)/self.slider_step))
+
     def update_label(self, position):
-        slider_value = (position/self.slider_number_of_steps) * \
-            (self.slider_maximum-self.slider_minimum)+self.slider_minimum
+        slider_value = self.slider_value_from_position(position)
         self.ui.slider_value.setText(f"{slider_value:.2f}")
 
     def on_update_normalization(self):
-        if self.is_normalizing:
+        if self.is_normalizing or self.is_smoothing:
             return
-        position = self.ui.horizontalSlider.value()
-        slider_value = (position/self.slider_number_of_steps) * \
-            (self.slider_maximum-self.slider_minimum)+self.slider_minimum
-        self.logic.on_adjust_smooth_factor(slider_value)
+        if self.logic.continuum is None or self.logic.continuum_error is None:
+            return
+        slider_value = self.slider_value_from_position(
+            self.ui.horizontalSlider.value())
+        self.is_smoothing = True
+        self.ui.statusbar.showMessage("Updating smoothing in background...")
+        self._set_smoothing_ui(True)
+        worker = Worker(self._calculate_smoothing_update, slider_value)
+        worker.signals.result.connect(self._on_smoothing_result)
+        worker.signals.error.connect(self._on_smoothing_error)
+        worker.signals.finished.connect(self._on_smoothing_done)
+        self.threadpool.start(worker)
+
+    def _calculate_smoothing_update(self, slider_value):
+        knots_x, knots_y = self.logic.calculate_spline_knots(slider_value)
+        return slider_value, knots_x, knots_y
+
+    def _set_smoothing_ui(self, smoothing):
+        self.ui.update_normalization.setEnabled(not smoothing)
+        self.ui.horizontalSlider.setEnabled(not smoothing)
+
+    def _on_smoothing_result(self, result):
+        slider_value, knots_x, knots_y = result
+        self.logic.apply_spline_knots(slider_value, knots_x, knots_y)
         self.update_plots_and_data(resize=False)
+        self.ui.statusbar.showMessage("Smoothing updated.")
+
+    def _on_smoothing_error(self, error_info):
+        exctype, value, tb = error_info
+        self.ui.statusbar.showMessage(f"Smoothing failed: {value}")
+        print(tb)
+
+    def _on_smoothing_done(self):
+        self.is_smoothing = False
+        self._set_smoothing_ui(False)
 
     def configure_spinning_box(self):
         self.ui.sampling_spin_box.setMinimum(0.003)
@@ -212,6 +253,7 @@ class MainWindow(QMainWindow):
     def _set_normalizing_ui(self, normalizing):
         self.ui.action_normalize.setEnabled(not normalizing)
         self.ui.update_normalization.setEnabled(not normalizing)
+        self.ui.horizontalSlider.setEnabled(not normalizing)
         self.ui.actionOpen_spectrum.setEnabled(not normalizing)
         self.ui.actionOpen_processed_spectrum.setEnabled(not normalizing)
 
@@ -321,6 +363,14 @@ def argument_parser():
                         default='active',
                         type=str
                         )
+    parser.add_argument('--smoothing',
+                        dest='smoothing',
+                        action='store',
+                        help='Set continuum smoothing factor used in quiet mode.',
+                        required=False,
+                        default=1.0,
+                        type=float
+                        )
     available_weights = ['active', 'synth', 'emission']
 
     if '--quiet' in sys.argv:
@@ -368,7 +418,8 @@ if __name__ == "__main__":
                        which_weights=args.which_weights)
     else:
         from suppnet.NN_utility import process_all_spectra
-        process_all_spectra(args.file_names, 
-                            skip_rows=args.skipRows[0], 
+        process_all_spectra(args.file_names,
+                            skip_rows=args.skipRows[0],
                             resampling_step=args.resampling_step,
+                            smoothing=args.smoothing,
                             which_weights=args.which_weights)
