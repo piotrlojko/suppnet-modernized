@@ -1,7 +1,7 @@
+from pathlib import Path
 from setuptools import setup, find_packages
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+long_description = Path("README.md").read_text(encoding="utf-8")
 
 setup(name='suppnet',
       version='0.0.1',
@@ -19,11 +19,11 @@ setup(name='suppnet',
         ],
       python_requires='>=3.12.3',
       install_requires=[
-          'numpy==2.4.3',
-          'scipy==1.17.1',
-          'PySide6==6.10.2',
-          'matplotlib==3.10.8',
-          'pandas==3.0.1',
+          'numpy==2.5.1',
+          'scipy==1.18.0',
+          'PySide6==6.11.1',
+          'matplotlib==3.11.1',
+          'pandas==3.0.5',
           'tensorflow==2.21.0',
       ],
 )
