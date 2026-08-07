@@ -1,10 +1,10 @@
 > [!IMPORTANT]
-> ## This repo is a vibe-coded, modernized fork of the original `SUPPNet` code. The code is functional and tested.
+> ## This repo contains a vibe-coded, modernized fork of the original `SUPPNet` software. The code itself is functional and tested.
 > The main goal was to create a sleek and modern `SUPPNet` release, tailored for the latest versions of Python and
 > the required packages (e.g., TensorFlow, Pandas). Another incentive was to transition from the original `Anaconda`-rooted
-> solution into a pure `venv`-based one, since `Anaconda` is known for having troubles with resolving its databases.
+> solution into a pure `venv`-based one, since `Anaconda` is known for having trouble with resolving its databases.
 > 
-> All the credit belongs to **Tomasz Różański** and **Collaborators**
+> *All the credit belongs to **Tomasz Różański** and **Collaborators***
 
 
 # SUPPNet: Neural network for stellar spectrum normalisation
