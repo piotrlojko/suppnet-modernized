@@ -99,6 +99,17 @@ sudo ln -s $(pwd)/SUPPNET.sh /usr/bin/SUPPNET
 ```
 to enable SUPPNet for all users.
 
+## Unlinking `SUPPNet`
+
+If you want to get rid of this code once and for all, you should also consider removing any existing symlinks. Run:
+```
+type -a SUPPNET
+```
+and inspect the result to find a path to your `SUPPNet` symbolic link. Then simply remove it with:
+```
+sudo rm /path/to/the/symlink
+```
+
 ## Python script usage
 After successful environment setup and linking the script SUPPNET in your personal `bin` directory, you should be able to use SUPPNet. Spectra that you are working with shouldn't have any header: the first column is to contain wavelengths in angstroms (nanometers possible, but then you need to change the sampling value from default 0.05 to 0.005), the second should contain flux. Start with:
 ```
