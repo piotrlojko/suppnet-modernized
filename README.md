@@ -59,68 +59,30 @@ Activate it:
   %USERPROFILE%\suppnet_env\Scripts\activate
   ```
 
-### 3. Install dependencies
+### 3. Install dependencies 
+#### 3.1 Nvidia GPU:
 
-Install all required packages with pip:
+Install all required packages (including `PyTorch` for CUDA) with pip:
 ```
-pip install -r requirements.txt
+pip install -r requirements-nvidia.txt
 ```
-
-## Neural network backend
-
-SUPPNet runs on **PyTorch**. The original TensorFlow implementation was ported layer by layer, and the network reads the
-same weight files that have always been in this repository (`suppnet/supp_models_modernized/*.weights.h5`) — nothing was
-retrained, re-exported or re-quantised.
-
-### Devices
-
-The device is picked automatically, in this order: **CUDA** → **Intel XPU** → **Apple MPS** → **CPU**. To force a
-specific one, set `SUPPNET_DEVICE`:
+#### 3.2 Intel/AMD GPUs or CPUs only:
 ```
-SUPPNET_DEVICE=cpu SUPPNET --quiet spectrum.dat
+pip install -r requirements-no-torch.txt
 ```
-Any string PyTorch understands works (`cpu`, `cuda`, `cuda:1`, `xpu`, `mps`). `SUPPNET_BATCH_SIZE` overrides how many
-8192-point windows are pushed through the network at once — raise it to trade memory for throughput, lower it if a GPU
-runs out of memory.
-
-Predictions are computed in full float32. On CUDA, TF32 tensor cores are disabled for that reason; set
-`SUPPNET_ALLOW_TF32=1` to trade a little precision for speed on Ampere-or-newer cards.
-
-### Performance
-
-Throughput of the network itself, normalising 1000 Å of an échelle spectrum (128 windows of 8192 samples) on an
-8-core Intel Core Ultra 9 288V with its integrated Arc GPU:
-
-| backend                                        | windows/s | relative |
-| ---------------------------------------------- | --------: | -------: |
-| TensorFlow 2.15 on CPU — what this code used to do |      11.9 |     1.0x |
-| PyTorch on CPU                                 |      50.6 |     4.3x |
-| PyTorch on the integrated GPU (`xpu`)          |     173.0 |    14.6x |
-
-The comparison is not stacked in PyTorch's favour: TensorFlow's fastest possible path on the same machine, a
-`tf.function` fed batches of 16 rather than the `model.predict` the original code actually called, reaches
-34.5 windows/s — still slower than PyTorch on CPU.
-
-SUPPNet is an unusual network to run: about a thousand convolutions, most of them only four to forty-four channels
-wide, so wall time is dominated by per-operation overhead rather than by arithmetic. Handing every one of those tiny
-operations all available cores makes it *slower* — by an order of magnitude on hybrid performance/efficiency CPUs,
-where every synchronisation waits for the slowest core. SUPPNet therefore uses half the cores by default, at most
-eight, which sits in the flat part of the curve. Set `SUPPNET_THREADS` to tune your own machine (`OMP_NUM_THREADS`
-is respected if you already set it):
+For intel GPUs 
 ```
-SUPPNET_THREADS=3 SUPPNET_DEVICE=cpu SUPPNET --quiet spectrum.dat
+pip install torch[==2.13.0] --index-url https://download.pytorch.org/whl/xpu 
+```
+For AMD with ROCm platform
+```
+pip install torch[==2.13.0] --index-url https://download.pytorch.org/whl/rocm7.2 
 ```
 
-### Verifying the port
-
-Every `.keras` archive in `suppnet/supp_models_modernized` stores a complete description of the original TensorFlow
-graph. `tools/verify_torch_port.py` interprets that description node by node — matching weights to layers *by name* —
-and compares the result against the PyTorch model, which builds its graph from Python code and matches weights *by
-creation order*. The two share no code, so agreement checks both the architecture and the weight mapping:
+For CPU-based use only 
 ```
-python tools/verify_torch_port.py
+pip install torch[==2.13.0] --index-url https://download.pytorch.org/whl/cpu 
 ```
-It reports the largest deviation per output and exits non-zero if anything drifts beyond float32 round-off.
 
 ## Creating symbolic link in local '~/bin/' directory
 
