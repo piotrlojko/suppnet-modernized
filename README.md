@@ -1,12 +1,10 @@
 > [!IMPORTANT]
 > ## This repo contains a vibe-coded, modernized fork of the original `SUPPNet` software. The code itself is functional and tested.
-> The main goal was to create a sleek and modern `SUPPNet` release, tailored for the latest versions of Python and
+> The main goal was to create a sleek and modern `SUPPNet` release, tailored for the latest versions of Python (v3.14) and
 > the required packages (e.g., PyTorch, Pandas). Another incentive was to transition from the original `Anaconda`-rooted
 > solution into a pure `venv`-based one, since `Anaconda` is known for having trouble with resolving its databases.
 >
-> The neural network now runs on **PyTorch** instead of TensorFlow, which had become the one dependency blocking
-> installation on current Python releases. The network itself is unchanged: the original weight files are loaded as they
-> are, and the ported graph reproduces the TensorFlow one to float32 round-off (see [Neural network backend](#neural-network-backend)).
+> **NOTE:** The neural network now runs on `PyTorch` instead of `TensorFlow`.
 > 
 > *All the credit belongs to **Tomasz Różański** and **Collaborators***
 
