@@ -1,3 +1,8 @@
+> **Note**
+> SUPPNet now runs on PyTorch, and `suppnet/keras_weights.py` reads the `.weights.h5` files below directly — they are
+> still the canonical weights and need no further conversion. The `.keras` archives are kept because they also store the
+> original TensorFlow graph description, which `tools/verify_torch_port.py` uses to verify the port.
+
 ### The data located in this folder contains modern TF-friendly model checkpoints, which have been converted from (/supp_weights):
 * SUPPNet_18_powr.data-00000-of-00001
 * SUPPNet_18_powr.index

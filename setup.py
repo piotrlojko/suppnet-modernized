@@ -24,7 +24,8 @@ setup(name='suppnet',
           'PySide6==6.11.1',
           'matplotlib==3.11.1',
           'pandas==3.0.5',
-          'tensorflow==2.21.0',
+          'torch==2.13.0',
+          'h5py==3.16.0',
       ],
 )
 

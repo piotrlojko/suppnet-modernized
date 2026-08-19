@@ -1,8 +1,12 @@
 > [!IMPORTANT]
 > ## This repo contains a vibe-coded, modernized fork of the original `SUPPNet` software. The code itself is functional and tested.
 > The main goal was to create a sleek and modern `SUPPNet` release, tailored for the latest versions of Python and
-> the required packages (e.g., TensorFlow, Pandas). Another incentive was to transition from the original `Anaconda`-rooted
+> the required packages (e.g., PyTorch, Pandas). Another incentive was to transition from the original `Anaconda`-rooted
 > solution into a pure `venv`-based one, since `Anaconda` is known for having trouble with resolving its databases.
+>
+> The neural network now runs on **PyTorch** instead of TensorFlow, which had become the one dependency blocking
+> installation on current Python releases. The network itself is unchanged: the original weight files are loaded as they
+> are, and the ported graph reproduces the TensorFlow one to float32 round-off (see [Neural network backend](#neural-network-backend)).
 > 
 > *All the credit belongs to **Tomasz Różański** and **Collaborators***
 
@@ -25,7 +29,8 @@ SUPPNet can be installed in several simple steps. If you want to test SUPPNet on
 
 ### 0. Prerequisites
 
-Install [Python 3.12.3](https://www.python.org/downloads/) or later. All dependencies are available via `pip`.
+Install [Python 3.12.3](https://www.python.org/downloads/) or later — including Python 3.14. All dependencies are
+available via `pip`.
 
 ### 1. Download repository
 
@@ -60,6 +65,62 @@ Install all required packages with pip:
 ```
 pip install -r requirements.txt
 ```
+
+## Neural network backend
+
+SUPPNet runs on **PyTorch**. The original TensorFlow implementation was ported layer by layer, and the network reads the
+same weight files that have always been in this repository (`suppnet/supp_models_modernized/*.weights.h5`) — nothing was
+retrained, re-exported or re-quantised.
+
+### Devices
+
+The device is picked automatically, in this order: **CUDA** → **Intel XPU** → **Apple MPS** → **CPU**. To force a
+specific one, set `SUPPNET_DEVICE`:
+```
+SUPPNET_DEVICE=cpu SUPPNET --quiet spectrum.dat
+```
+Any string PyTorch understands works (`cpu`, `cuda`, `cuda:1`, `xpu`, `mps`). `SUPPNET_BATCH_SIZE` overrides how many
+8192-point windows are pushed through the network at once — raise it to trade memory for throughput, lower it if a GPU
+runs out of memory.
+
+Predictions are computed in full float32. On CUDA, TF32 tensor cores are disabled for that reason; set
+`SUPPNET_ALLOW_TF32=1` to trade a little precision for speed on Ampere-or-newer cards.
+
+### Performance
+
+Throughput of the network itself, normalising 1000 Å of an échelle spectrum (128 windows of 8192 samples) on an
+8-core Intel Core Ultra 9 288V with its integrated Arc GPU:
+
+| backend                                        | windows/s | relative |
+| ---------------------------------------------- | --------: | -------: |
+| TensorFlow 2.15 on CPU — what this code used to do |      11.9 |     1.0x |
+| PyTorch on CPU                                 |      50.6 |     4.3x |
+| PyTorch on the integrated GPU (`xpu`)          |     173.0 |    14.6x |
+
+The comparison is not stacked in PyTorch's favour: TensorFlow's fastest possible path on the same machine, a
+`tf.function` fed batches of 16 rather than the `model.predict` the original code actually called, reaches
+34.5 windows/s — still slower than PyTorch on CPU.
+
+SUPPNet is an unusual network to run: about a thousand convolutions, most of them only four to forty-four channels
+wide, so wall time is dominated by per-operation overhead rather than by arithmetic. Handing every one of those tiny
+operations all available cores makes it *slower* — by an order of magnitude on hybrid performance/efficiency CPUs,
+where every synchronisation waits for the slowest core. SUPPNet therefore uses half the cores by default, at most
+eight, which sits in the flat part of the curve. Set `SUPPNET_THREADS` to tune your own machine (`OMP_NUM_THREADS`
+is respected if you already set it):
+```
+SUPPNET_THREADS=3 SUPPNET_DEVICE=cpu SUPPNET --quiet spectrum.dat
+```
+
+### Verifying the port
+
+Every `.keras` archive in `suppnet/supp_models_modernized` stores a complete description of the original TensorFlow
+graph. `tools/verify_torch_port.py` interprets that description node by node — matching weights to layers *by name* —
+and compares the result against the PyTorch model, which builds its graph from Python code and matches weights *by
+creation order*. The two share no code, so agreement checks both the architecture and the weight mapping:
+```
+python tools/verify_torch_port.py
+```
+It reports the largest deviation per output and exits non-zero if anything drifts beyond float32 round-off.
 
 ## Creating symbolic link in local '~/bin/' directory
 
@@ -119,11 +180,11 @@ The program GUI window should pop up, and from then on, you are good to go to no
 
 1. Spectrum-by-spectrum normalisation using an interactive app:
 ```
-SUPPNET [--segmentation] [--sampling RESAMPLING_STEP=0.05] [--weights WHICH_WEIGHTS=active|synth|emission]
+SUPPNET [--segmentation] [--sampling RESAMPLING_STEP=0.05] [--weights WHICH_WEIGHTS=active|synth|emission] [--device DEVICE]
 ```
 2. Normalisation of a group of spectra without any supervision:
 ```
-SUPPNET --quiet [--sampling RESAMPLING_STEP=0.05] [--smoothing SMOOTHING_FACTOR=1.0] [--weights WHICH_WEIGHTS=active|synth|emission] [--skip number_of_rows_to_skip=0] path_to_spec_1.txt [path_to_spec_2.txt ...]
+SUPPNET --quiet [--sampling RESAMPLING_STEP=0.05] [--smoothing SMOOTHING_FACTOR=1.0] [--weights WHICH_WEIGHTS=active|synth|emission] [--device DEVICE] [--skip number_of_rows_to_skip=0] path_to_spec_1.txt [path_to_spec_2.txt ...]
 ```
 3. Manual inspection and correction of previously normalised spectrum, SUPPNet will not be loaded (often used in pair with 2.):
 ```
@@ -135,11 +196,12 @@ You can always remind yourself of the usage by writing:
 SUPPNET --help
 ```
 
-### --sampling, --smoothing and --weights options
+### --sampling, --smoothing, --weights and --device options
 
 - `--sampling`, default=0.05, sampling option enables the user to adjust the resampling that the neural network is using for a pseudo-continuum prediction, (If working with wavelengths in nm should be changed to 0.005),
 - `--smoothing`, default=1.0, sets the pseudo-continuum smoothing factor used in quiet mode; values below 0.05 are clamped to 0.05 to keep spline fitting responsive and numerically stable,
-- `--weights`, default=active, set of weights that can be used, __active__ is a default one, __emission__ should be used for objects that show wide emission lines, __synth__ is a set of weights trained only on synthetic spectra and shouldn't be used for doing science.
+- `--weights`, default=active, set of weights that can be used, __active__ is a default one, __emission__ should be used for objects that show wide emission lines, __synth__ is a set of weights trained only on synthetic spectra and shouldn't be used for doing science,
+- `--device`, default=best available, the device the neural network runs on (`cpu`, `cuda`, `xpu`, `mps`); see [Neural network backend](#neural-network-backend).
 
 ## SUPPNet as a Python module
 

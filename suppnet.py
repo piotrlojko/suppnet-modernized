@@ -371,6 +371,15 @@ def argument_parser():
                         default=1.0,
                         type=float
                         )
+    parser.add_argument('--device',
+                        dest='device',
+                        action='store',
+                        help='Torch device to run the network on, e.g. cpu, cuda, xpu, mps.\n'
+                             'Defaults to the best accelerator available.',
+                        required=False,
+                        default=None,
+                        type=str
+                        )
     available_weights = ['active', 'synth', 'emission']
 
     if '--quiet' in sys.argv:
@@ -403,6 +412,11 @@ def argument_parser():
     if args.which_weights not in available_weights:
         print('The weights you selected are not available. Please select one of the following: active, synth, emission')
         sys.exit()
+
+    # The network reads SUPPNET_DEVICE when it is built, in the GUI worker thread
+    # as well as in quiet mode, so setting it here covers both entry points.
+    if args.device:
+        os.environ['SUPPNET_DEVICE'] = args.device
 
     return args
 
